@@ -26,7 +26,6 @@ contract Voting {
     uint256 public totalVotes;
     bool public emergencyStop;
     
-    // Events
     event VoteCasted(address indexed voter, uint256 indexed candidateId, uint256 votingPower);
     event CandidateAdded(uint256 indexed candidateId, string name, address indexed addedBy);
     event VotingStarted(uint256 endTime);
@@ -35,7 +34,6 @@ contract Voting {
     event VoterBlacklistUpdated(address indexed voter, bool blacklisted);
     event VoteRevoked(address indexed voter, uint256 indexed candidateId);
     
-    // Custom Errors
     error OnlyAdmin(address caller);
     error VotingNotStarted();
     error VotingEnded();
@@ -97,19 +95,14 @@ contract Voting {
     }
     
     function vote(uint256 _candidateId) public votingOngoing notBlacklisted {
-        // Check if voting has started
         if (!votingStarted) revert VotingNotStarted();
         
-        // Check if voting has ended
         if (block.timestamp >= votingEnd) revert VotingEnded();
         
-        // Check if voter has already voted
         if (voters[msg.sender].hasVoted) revert AlreadyVoted(msg.sender);
         
-        // Check if candidate ID is valid
         if (_candidateId >= candidates.length) revert InvalidCandidateId(_candidateId);
         
-        // Check voting power
         if (voters[msg.sender].votingPower < minimumVotingPower) {
             revert InsufficientVotingPower(
                 msg.sender, 
@@ -118,7 +111,6 @@ contract Voting {
             );
         }
         
-        // Perform the vote
         voters[msg.sender].hasVoted = true;
         voters[msg.sender].votedCandidateId = _candidateId;
         candidates[_candidateId].voteCount += voters[msg.sender].votingPower;
@@ -160,7 +152,6 @@ contract Voting {
         emit VoteRevoked(msg.sender, candidateId);
     }
     
-    // View functions
     function getCandidatesCount() public view returns (uint256) {
         return candidates.length;
     }
