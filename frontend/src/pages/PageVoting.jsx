@@ -449,265 +449,259 @@ const PageVoting = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Loading...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
+        <div className="flex space-x-2 mb-4">
+          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce delay-75"></div>
+          <div className="w-4 h-4 bg-green-500 rounded-full animate-bounce delay-150"></div>
+          <div className="w-4 h-4 bg-red-500 rounded-full animate-bounce delay-225"></div>
+        </div>
+
+        <div className="flex space-x-1">
+          {["L", "o", "a", "d", "i", "n", "g", ".", ".", "."].map((char, index) => (
+            <span
+              key={index}
+              className="text-lg text-white font-semibold animate-wave"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              {char}
+            </span>
+          ))}
+        </div>
+        <style>
+          {`
+            .animate-wave {
+              display: inline-block;
+              animation: wave 1.5s ease-in-out infinite;
+            }
+            @keyframes wave {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-5px); }
+            }
+          `}
+        </style>
       </div>
     );
   }
+  
   return (
-    <div className="max-w-6xl mx-auto p-4">
-      {/* Error Display dengan status yang lebih detail */}
-      {error && (
-        <div className={`mb-4 p-4 rounded-lg ${error.includes('pending')
-            ? 'bg-blue-50 border border-blue-200'
+<div className="min-h-screen bg-gray-900 text-white">
+  <div className="max-w-6xl mx-auto p-6">
+    {error && (
+      <div
+        className={`mb-4 p-4 rounded-lg ${
+          error.includes('pending')
+            ? 'bg-blue-100 border border-blue-300'
             : error.includes('rejected')
-              ? 'bg-yellow-50 border border-yellow-200'
-              : 'bg-red-50 border border-red-200'
-          }`}>
-          <div className="flex items-center">
-            {error.includes('pending') && (
-              <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            )}
-            <span className={`${error.includes('pending')
+            ? 'bg-yellow-100 border border-yellow-300'
+            : 'bg-red-100 border border-red-300'
+        }`}
+      >
+        <div className="flex items-center">
+          {error.includes('pending') && (
+            <svg className="animate-spin h-5 w-5 mr-2 text-blue-500" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          )}
+          <span
+            className={`${
+              error.includes('pending')
                 ? 'text-blue-700'
                 : error.includes('rejected')
-                  ? 'text-yellow-700'
-                  : 'text-red-700'
-              }`}>
-              {error}
-            </span>
-          </div>
+                ? 'text-yellow-700'
+                : 'text-red-700'
+            }`}
+          >
+            {error}
+          </span>
         </div>
+      </div>
+    )}
 
-      )}
-
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="border-b border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-800">Voting dApp</h2>
-            {emergencyStop && (
-              <div className="mt-2 p-2 bg-red-100 text-red-700 rounded">
-                Emergency Stop Active
-              </div>
-            )}
+    <div className="bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
+      <div className="p-6 border-b border-gray-700">
+        <h2 className="text-2xl font-bold text-white">Blockchain Voting dApp</h2>
+        {emergencyStop && (
+          <div className="mt-2 p-2 bg-red-200 text-red-800 rounded">
+            Emergency Stop Active
           </div>
+        )}
+      </div>
 
-          <div className="p-6">
-            {/* Error Alert */}
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700">{error}</p>
-              </div>
-            )}
+      {/* Account & Voter Info */}
+      <div className="p-6">
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700">{error}</p>
           </div>
-          {/* Account & Voter Info */}
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        )}
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <p className="font-medium text-gray-300">
+              Connected Account: <span className="text-white">{account}</span>
+            </p>
+            <p className="font-medium text-gray-300">
+              Time Remaining: <span className="text-white">{Math.floor(remainingTime / 60)}m {remainingTime % 60}s</span>
+            </p>
+          </div>
+          {voterInfo && (
             <div className="space-y-2">
-              <p className="font-medium text-gray-700">
-                Connected Account: <span className="text-gray-900">{account}</span>
+              <p className="font-medium text-gray-300">
+                Voting Power: <span className="text-white">{voterInfo.votingPower}</span>
               </p>
-              <p className="font-medium text-gray-700">
-                Time Remaining: <span className="text-gray-900">
-                  {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
-                </span>
-              </p>
-            </div>
-            {voterInfo && (
-              <div className="space-y-2">
-                <p className="font-medium text-gray-700">
-                  Voting Power: <span className="text-gray-900">{voterInfo.votingPower}</span>
-                </p>
-                <p className="font-medium text-gray-700">
-                  Status: {voterInfo.isBlacklisted ? (
-                    <span className="text-red-600">Blacklisted</span>
-                  ) : voterInfo.hasVoted ? (
-                    <span className="text-green-600">Voted</span>
-                  ) : (
-                    <span className="text-blue-600">Not Voted</span>
-                  )}
-                </p>
-                {voterInfo.hasVoted && (
-                  <button
-                    onClick={handleRevokeVote}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    Revoke Vote
-                  </button>
+              <p className="font-medium text-gray-300">
+                Status: {voterInfo.isBlacklisted ? (
+                  <span className="text-red-600">Blacklisted</span>
+                ) : voterInfo.hasVoted ? (
+                  <span className="text-green-500">Voted</span>
+                ) : (
+                  <span className="text-blue-500">Not Voted</span>
                 )}
-              </div>
-            )}
-          </div>
-
-          {/* Admin Controls */}
-          {isAdmin && (
-            <div className="space-y-4 mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="font-semibold text-gray-800">Admin Controls</h3>
-
-              {/* Add Candidate */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={newCandidate.name}
-                  onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
-                  placeholder="Candidate Name"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <input
-                  type="text"
-                  value={newCandidate.description}
-                  onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
-                  placeholder="Candidate Description"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
+              </p>
+              {voterInfo.hasVoted && (
                 <button
-                  onClick={handleAddCandidate}
-                  className="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Add Candidate
-                </button>
-              </div>
-
-              {/* Start Voting */}
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={votingDuration}
-                  onChange={(e) => setVotingDuration(parseInt(e.target.value))}
-                  placeholder="Duration (minutes)"
-                  min="1"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <button
-                  onClick={handleStartVoting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Start Voting
-                </button>
-              </div>
-
-              {/* Assign Voting Power */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  value={voterAddress}
-                  onChange={(e) => setVoterAddress(e.target.value)}
-                  placeholder="Voter Address"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <input
-                  type="number"
-                  value={votingPowerInput}
-                  onChange={(e) => setVotingPowerInput(e.target.value)}
-                  placeholder="Voting Power"
-                  min="1"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <button
-                  onClick={handleAssignVotingPower}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Assign Power
-                </button>
-              </div>
-
-              {/* Blacklist Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  value={blacklistAddress}
-                  onChange={(e) => setBlacklistAddress(e.target.value)}
-                  placeholder="Voter Address"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <button
-                  onClick={() => handleSetBlacklist(true)}
+                  onClick={handleRevokeVote}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
-                  Blacklist
+                  Revoke Vote
                 </button>
-                <button
-                  onClick={() => handleSetBlacklist(false)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  Remove from Blacklist
-                </button>
-              </div>
+              )}
+            </div>
+          )}
+        </div>
 
-              {/* Emergency Stop */}
+        {/* Admin Controls */}
+        {isAdmin && (
+          <div className="space-y-4 mb-6 p-4 border border-gray-600 rounded-lg bg-gray-800">
+            <h3 className="font-semibold text-gray-300">Admin Controls</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <input
+                type="text"
+                value={newCandidate.name}
+                onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
+                placeholder="Candidate Name"
+                className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+              />
+              <input
+                type="text"
+                value={newCandidate.description}
+                onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
+                placeholder="Candidate Description"
+                className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+              />
               <button
-                onClick={handleToggleEmergencyStop}
-                className={`w-full px-4 py-2 rounded-lg text-white
-                  ${emergencyStop
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                  }`}
+                onClick={handleAddCandidate}
+                className="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                {emergencyStop ? 'Resume Voting' : 'Emergency Stop'}
+                Add Candidate
               </button>
             </div>
-          )}
 
-          {/* Voting Results */}
-          {votingResults && (
-            <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="font-semibold text-gray-800 mb-2">Voting Results</h3>
-              <p className="text-gray-700">
-                Total Votes Cast: <span className="font-medium">{votingResults.totalVotes}</span>
-              </p>
-            </div>
-          )}
-
-          {/* Candidates Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {candidates.map((candidate) => (
-              <div
-                key={candidate.id}
-                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm"
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={votingDuration}
+                onChange={(e) => setVotingDuration(parseInt(e.target.value))}
+                placeholder="Duration (minutes)"
+                min="1"
+                className="flex-1 px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+              />
+              <button
+                onClick={handleStartVoting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                <h3 className="font-medium text-lg text-gray-800 mb-2">
-                  {candidate.name}
-                </h3>
-                <p className="text-gray-600 mb-2">{candidate.description}</p>
-                <p className="text-gray-600 mb-4">
-                  Votes: <span className="font-medium">{candidate.votes}</span>
-                  {votingResults && (
-                    <span className="ml-2 text-sm">
-                      ({((candidate.votes / votingResults.totalVotes) * 100).toFixed(1)}%)
-                    </span>
-                  )}
-                </p>
-                <button
-                  onClick={() => handleVote(candidate.id)}
-                  disabled={
-                    remainingTime === 0 ||
-                    voterInfo?.hasVoted ||
-                    voterInfo?.isBlacklisted ||
-                    emergencyStop
-                  }
-                  className={`w-full px-4 py-2 rounded-lg text-white font-medium
-                    ${(remainingTime === 0 || voterInfo?.hasVoted || voterInfo?.isBlacklisted || emergencyStop)
-                      ? 'bg-gray-300 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                    }`}
-                >
-                  {voterInfo?.hasVoted
-                    ? 'Already Voted'
-                    : voterInfo?.isBlacklisted
-                      ? 'Blacklisted'
-                      : emergencyStop
-                        ? 'Voting Stopped'
-                        : 'Vote'}
-                </button>
-              </div>
-            ))}
+                Start Voting
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <input
+                type="text"
+                value={voterAddress}
+                onChange={(e) => setVoterAddress(e.target.value)}
+                placeholder="Voter Address"
+                className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+              />
+              <input
+                type="number"
+                value={votingPowerInput}
+                onChange={(e) => setVotingPowerInput(e.target.value)}
+                placeholder="Voting Power"
+                min="1"
+                className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+              />
+              <button
+                onClick={handleAssignVotingPower}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Assign Power
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <input
+                type="text"
+                value={blacklistAddress}
+                onChange={(e) => setBlacklistAddress(e.target.value)}
+                placeholder="Voter Address"
+                className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+              />
+              <button
+                onClick={() => handleSetBlacklist(true)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Blacklist
+              </button>
+              <button
+                onClick={() => handleSetBlacklist(false)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Remove from Blacklist
+              </button>
+            </div>
+
+            <button
+              onClick={handleToggleEmergencyStop}
+              className={`w-full px-4 py-2 rounded-lg text-white font-medium ${
+                emergencyStop ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
+              {emergencyStop ? 'Resume Voting' : 'Emergency Stop'}
+            </button>
           </div>
+        )}
+
+        {/* Voting Results */}
+        {votingResults && (
+          <div className="mb-6 p-4 border border-gray-700 rounded-lg bg-gray-800">
+            <h3 className="font-semibold text-gray-300 mb-2">Voting Results</h3>
+            <p className="text-gray-400">
+              Total Votes Cast: <span className="font-medium text-white">{votingResults.totalVotes}</span>
+            </p>
+          </div>
+        )}
+
+        {/* Candidate List */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {candidates.map((candidate) => (
+            <div key={candidate.id} className="border border-gray-600 rounded-lg p-4 bg-gray-800 shadow-sm">
+              <h3 className="font-medium text-lg text-white mb-2">{candidate.name}</h3>
+              <p className="text-gray-400 mb-4">{candidate.description}</p>
+              <button
+                onClick={() => handleVote(candidate.id)}
+                disabled={voterInfo?.hasVoted || !votingStatus}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+              >
+                Vote
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
+  </div>
+</div>
+
   );
 };
 
