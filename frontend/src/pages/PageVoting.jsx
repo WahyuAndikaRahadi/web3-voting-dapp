@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
 import { BrowserProvider, Contract } from 'ethers';
-import { contractABI,contractAddress } from '../constant';
+import { contractABI, contractAddress } from '../constant';
+import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
+
 
 const PageVoting = () => {
   const [contract, setContract] = useState(null);
@@ -10,9 +12,6 @@ const PageVoting = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [remainingTime, setRemainingTime] = useState(0);
-  const [error, setError] = useState('');
-
-  // New state variables for additional features
   const [newCandidate, setNewCandidate] = useState({ name: '', description: '' });
   const [votingDuration, setVotingDuration] = useState(60);
   const [voterInfo, setVoterInfo] = useState(null);
@@ -21,7 +20,9 @@ const PageVoting = () => {
   const [emergencyStop, setEmergencyStop] = useState(false);
   const [votingResults, setVotingResults] = useState(null);
   const [blacklistAddress, setBlacklistAddress] = useState('');
+  const [votingStatus, setVotingStatus] = useState(false);
 
+  // Initialize contract and load initial data
   const initContract = async () => {
     try {
       if (typeof window.ethereum === 'undefined') {
@@ -31,7 +32,6 @@ const PageVoting = () => {
       const provider = new BrowserProvider(window.ethereum);
       const accounts = await provider.send('eth_requestAccounts', []);
       const currentAccount = accounts[0];
-      setAccount(currentAccount);
 
       const signer = await provider.getSigner();
       const votingContract = new Contract(
@@ -41,33 +41,36 @@ const PageVoting = () => {
       );
 
       setContract(votingContract);
+      setAccount(currentAccount);
 
-      // Load voter info immediately after contract initialization
-      const [hasVoted, votedCandidateId, votingPower, isBlacklisted] = 
-        await votingContract.getVoterInfo(currentAccount);
-      
-      setVoterInfo({
-        hasVoted,
-        votedCandidateId: Number(votedCandidateId),
-        votingPower: Number(votingPower),
-        isBlacklisted
-      });
-
+      // Check admin status for the current account
       const admin = await votingContract.admin();
-      setIsAdmin(currentAccount.toLowerCase() === admin.toLowerCase());
+      const isCurrentAdmin = currentAccount.toLowerCase() === admin.toLowerCase();
+      setIsAdmin(isCurrentAdmin);
 
+      // Load emergency stop status
       const stopStatus = await votingContract.emergencyStop();
       setEmergencyStop(stopStatus);
 
+      // Load candidate and voting data
+      await Promise.all([
+        loadCandidates(votingContract),
+        loadVoterInfo(votingContract, currentAccount),
+        loadVotingResults(votingContract),
+        checkVotingStatus(votingContract)
+      ]);
+
+      setLoading(false);
       return votingContract;
     } catch (err) {
       console.error('Init contract error:', err);
       setError(err.message);
+      setLoading(false);
       throw err;
     }
   };
 
-
+  // Load candidates and voting results
   const loadCandidates = async (votingContract) => {
     try {
       if (!votingContract) return;
@@ -86,113 +89,118 @@ const PageVoting = () => {
       }
 
       setCandidates(candidatesList);
-
-      // Load voting results
-      const [totalVotes, voteCounts] = await votingContract.getVotingResults();
-      setVotingResults({ totalVotes: Number(totalVotes), voteCounts });
     } catch (err) {
+      console.error('Error loading candidates:', err);
       setError('Error loading candidates');
-      console.error(err);
     }
   };
 
-  const loadVoterInfo = async (votingContract, voterAddress) => {
+  const loadVotingResults = async (votingContract) => {
     try {
-      if (!votingContract || !voterAddress) {
+      if (!votingContract) return;
+
+      const [totalVotes, voteCounts] = await votingContract.getVotingResults();
+      setVotingResults({
+        totalVotes: Number(totalVotes),
+        voteCounts: voteCounts.map(count => Number(count))
+      });
+    } catch (err) {
+      console.error('Error loading voting results:', err);
+      setError('Error loading voting results');
+    }
+  };
+
+  // Load voter information for a specific address
+  const loadVoterInfo = async (votingContract, voterAddr) => {
+    try {
+      if (!votingContract || !voterAddr) {
         console.warn('Missing contract or voter address');
         return;
       }
 
-      console.log('Loading voter info for:', voterAddress);
-      const [hasVoted, votedCandidateId, votingPower, isBlacklisted] = 
-        await votingContract.getVoterInfo(voterAddress);
-      
-      const voterInfoData = {
+      const [hasVoted, votedCandidateId, votingPower, isBlacklisted] =
+        await votingContract.getVoterInfo(voterAddr);
+
+      setVoterInfo({
         hasVoted,
         votedCandidateId: Number(votedCandidateId),
         votingPower: Number(votingPower),
         isBlacklisted
-      };
-      
-      console.log('Voter info loaded:', voterInfoData);
-      setVoterInfo(voterInfoData);
+      });
     } catch (err) {
       console.error('Error loading voter info:', err);
       setError('Failed to load voter information');
     }
   };
 
-
-  const updateRemainingTime = async (votingContract) => {
+  // Check the current voting status
+  const checkVotingStatus = async (votingContract) => {
     try {
       if (!votingContract) return;
 
       const time = await votingContract.getRemainingTime();
       setRemainingTime(Number(time));
 
+      setVotingStatus(Number(time) > 0);
+
       if (Number(time) > 0) {
-        setTimeout(() => updateRemainingTime(votingContract), 1000);
+        setTimeout(() => checkVotingStatus(votingContract), 1000);
       }
     } catch (err) {
-      setError('Error updating remaining time');
-      console.error(err);
+      console.error('Error checking voting status:', err);
+      setError('Error checking voting status');
     }
   };
 
+  // Initial setup
   useEffect(() => {
     const init = async () => {
       try {
         const votingContract = await initContract();
-        
-        // Load all necessary data
-        await Promise.all([
-          loadCandidates(votingContract),
-          updateRemainingTime(votingContract),
-          loadVoterInfo(votingContract, account)
-        ]);
-
-        votingContract.on('VoteCasted', async (voter, candidateId, votingPower) => {
-          await loadCandidates(votingContract);
-          await loadVoterInfo(votingContract, account);
-        });
-
 
         // Set up event listeners
-        votingContract.on('VoteCasted', (voter, candidateId, votingPower) => {
-          loadCandidates(votingContract);
-          loadVoterInfo(votingContract, account);
+        votingContract.on('VoteCasted', async () => {
+          await Promise.all([
+            loadVoterInfo(votingContract, account),
+            loadCandidates(votingContract),
+            loadVotingResults(votingContract)
+          ]);
         });
 
-        votingContract.on('CandidateAdded', (candidateId, name, addedBy) => {
-          loadCandidates(votingContract);
+        votingContract.on('CandidateAdded', async () => {
+          await loadCandidates(votingContract);
         });
 
-        votingContract.on('VotingStarted', (endTime) => {
-          updateRemainingTime(votingContract);
+        votingContract.on('VotingStarted', async () => {
+          await checkVotingStatus(votingContract);
         });
 
-        votingContract.on('VotingPowerAssigned', (voter, power) => {
-          loadVoterInfo(votingContract, voter);
+        votingContract.on('VotingPowerAssigned', async (voter) => {
+          if (voter.toLowerCase() === account.toLowerCase()) {
+            await loadVoterInfo(votingContract, account);
+          }
         });
 
         votingContract.on('EmergencyStopToggled', (stopped) => {
           setEmergencyStop(stopped);
         });
 
-        votingContract.on('VoterBlacklistUpdated', (voter, blacklisted) => {
-          loadVoterInfo(votingContract, voter);
+        votingContract.on('VoterBlacklistUpdated', async (voter) => {
+          if (voter.toLowerCase() === account.toLowerCase()) {
+            await loadVoterInfo(votingContract, account);
+          }
         });
 
-        votingContract.on('VoteRevoked', (voter, candidateId) => {
-          loadCandidates(votingContract);
-          loadVoterInfo(votingContract, voter);
+        votingContract.on('VoteRevoked', async () => {
+          await Promise.all([
+            loadVoterInfo(votingContract, account),
+            loadCandidates(votingContract),
+            loadVotingResults(votingContract)
+          ]);
         });
-
-setLoading(false);
       } catch (err) {
         console.error('Initialization error:', err);
         setError(err.message);
-        setLoading(false);
       }
     };
 
@@ -204,13 +212,23 @@ setLoading(false);
       }
     };
   }, []);
-  
-useEffect(() => {
+
+  // Handle account changes
+  useEffect(() => {
     const handleAccountsChanged = async (accounts) => {
       if (accounts.length > 0 && accounts[0] !== account) {
-        setAccount(accounts[0]);
+        window.location.reload();
+        const newAccount = accounts[0];
+        setAccount(newAccount);
+
         if (contract) {
-          await loadVoterInfo(contract, accounts[0]);
+          // Reload all data for the new account
+          await Promise.all([
+            loadVoterInfo(contract, newAccount),
+            loadCandidates(contract),
+            loadVotingResults(contract),
+            checkVotingStatus(contract)
+          ]);
         }
       }
     };
@@ -226,11 +244,11 @@ useEffect(() => {
     };
   }, [contract, account]);
 
+  // Transaction helper functions
   const checkNetwork = async () => {
     try {
       const provider = new BrowserProvider(window.ethereum);
       const network = await provider.getNetwork();
-      // Pastikan network yang benar (misal: localhost 31337 untuk Hardhat)
       if (network.chainId !== 31337n) {
         throw new Error('Please connect to the correct network (Localhost 31337)');
       }
@@ -241,7 +259,6 @@ useEffect(() => {
     }
   };
 
-  // 2. Fungsi untuk memeriksa saldo
   const checkBalance = async (address) => {
     try {
       const provider = new BrowserProvider(window.ethereum);
@@ -256,11 +273,9 @@ useEffect(() => {
     }
   };
 
-  // 3. Fungsi untuk memperkirakan gas
   const estimateGas = async (transaction) => {
     try {
-      const gasEstimate = await transaction.estimateGas();
-      return gasEstimate;
+      return await transaction.estimateGas();
     } catch (err) {
       throw new Error('Failed to estimate gas. Contract may be reverting.');
     }
@@ -270,29 +285,22 @@ useEffect(() => {
     let errorMessage = 'An error occurred';
 
     if (error.code === 4001) {
-        errorMessage = 'Transaction rejected by user';
+      errorMessage = 'Transaction rejected by user';
     } else if (error.code === 'INSUFFICIENT_FUNDS') {
-        errorMessage = 'Insufficient funds for transaction';
+      errorMessage = 'Insufficient funds for transaction';
     } else if (error.code === -32603) {
-        if (error.message.includes('execution reverted')) {
-            const match = error.message.match(/reverted with reason string '(.+)'/);
-            errorMessage = match ? match[1].trim() : 'Transaction failed in contract';
-        }
-    } else if (error.message.includes('gas')) {
-        errorMessage = 'Gas estimation failed. Transaction may fail.';
-    } else if (error.message.includes('network')) {
-        errorMessage = 'Network error. Please check your connection';
+      if (error.message.includes('execution reverted')) {
+        const match = error.message.match(/reverted with reason string '(.+)'/);
+        errorMessage = match ? match[1].trim() : 'Transaction failed in contract';
+      }
     }
 
     setError(errorMessage);
-    console.error('Detailed error:', error);
-};
+    console.error('Transaction error:', error);
+  };
 
-
-  // 5. Enhanced transaction executor
   const executeTransaction = async (transactionFunc, preChecks = true) => {
     try {
-      // Pre-transaction checks
       if (preChecks) {
         const networkOk = await checkNetwork();
         if (!networkOk) return;
@@ -301,20 +309,20 @@ useEffect(() => {
         if (!balanceOk) return;
       }
 
-      // Prepare transaction
       const transaction = await transactionFunc();
+      await estimateGas(transaction);
 
-      // Estimate gas
-      try {
-        await estimateGas(transaction);
-      } catch (err) {
-        throw new Error('Transaction will likely fail. Please check your inputs.');
-      }
-
-      // Execute transaction
-      setError('Transaction pending... Please wait');
+      setError('Transaction pending...');
       const receipt = await transaction.wait();
       setError('');
+
+      // Reload data after successful transaction
+      await Promise.all([
+        loadVoterInfo(contract, account),
+        loadCandidates(contract),
+        loadVotingResults(contract),
+        checkVotingStatus(contract)
+      ]);
 
       return receipt;
     } catch (error) {
@@ -323,23 +331,16 @@ useEffect(() => {
     }
   };
 
-
+  // Action handlers
   const handleAddCandidate = async () => {
     try {
-      if (!contract) {
-        setError('Contract not initialized');
+      if (!contract || !isAdmin || !votingStatus) {
+        setError('Not authorized or voting is in progress');
         return;
       }
 
-      // Validasi input
       if (!newCandidate.name.trim() || !newCandidate.description.trim()) {
         setError('Candidate name and description are required');
-        return;
-      }
-
-      // Check admin status
-      if (!isAdmin) {
-        setError('Only admin can add candidates');
         return;
       }
 
@@ -348,429 +349,394 @@ useEffect(() => {
       );
 
       setNewCandidate({ name: '', description: '' });
-      await loadCandidates(contract);
-
     } catch (err) {
       console.error('Add candidate error:', err);
     }
   };
 
-
   const handleStartVoting = async () => {
     try {
-      if (!contract) return;
-      setError('');
-
-      if (votingDuration <= 0) {
-        throw new Error('Duration must be greater than 0');
+      if (!contract || !isAdmin) {
+        setError('Not authorized');
+        return;
       }
 
-      const tx = await contract.startVoting(votingDuration);
-      await tx.wait();
-      await updateRemainingTime(contract);
+      if (votingDuration <= 0) {
+        setError('Duration must be greater than 0');
+        return;
+      }
+
+      await executeTransaction(
+        () => contract.startVoting(votingDuration)
+      );
     } catch (err) {
-      setError(err.message || 'Error starting voting');
-      console.error(err);
+      console.error('Start voting error:', err);
     }
   };
 
   const handleVote = async (candidateId) => {
     try {
-      if (!contract) {
-        setError('Contract not initialized');
+      if (!contract || !account || !votingStatus) {
+        setError('Please connect your wallet or voting is not in progress');
         return;
       }
 
-      if (!account) {
-        setError('Please connect your wallet');
-        return;
-      }
-
-      // Reload voter info before voting to ensure it's up to date
-      await loadVoterInfo(contract, account);
-
-      // Check if voter info is loaded
-      if (!voterInfo) {
-        console.log('Attempting to reload voter info...');
-        await loadVoterInfo(contract, account);
-        
-        if (!voterInfo) {
-          setError('Please wait while loading voter information');
-          return;
-        }
-      }
-
-      // Pre-validation checks
-      if (voterInfo.hasVoted) {
+      if (voterInfo?.hasVoted) {
         setError('You have already voted');
         return;
       }
 
-      if (voterInfo.isBlacklisted) {
-        setError('You are blacklisted from voting');
+      if (voterInfo?.isBlacklisted) {
+        setError('You are not allowed to vote');
         return;
       }
 
-      if (voterInfo.votingPower < 1) {
-        setError('No voting power assigned. Please contact admin');
-        return;
-      }
-
-      if (remainingTime === 0) {
-        setError('Voting period has ended');
-        return;
-      }
-
-      setError('Processing vote...');
-      const tx = await contract.vote(candidateId);
-      setError('Confirming transaction...');
-      await tx.wait();
-
-      // Refresh data after successful vote
-      await loadCandidates(contract);
-      await loadVoterInfo(contract, account);
-      setError('');
-
+      await executeTransaction(
+        () => contract.vote(candidateId)
+      );
     } catch (err) {
       console.error('Voting error:', err);
-      handleTransactionError(err);
     }
   };
 
-
   const handleRevokeVote = async () => {
     try {
-      if (!contract) return;
-      setError('');
+      if (!contract || !votingStatus) {
+        setError('Voting is not in progress');
+        return;
+      }
 
-      const tx = await contract.revokeVote();
-      await tx.wait();
-      await loadCandidates(contract);
-      await loadVoterInfo(contract, account);
+      if (!voterInfo?.hasVoted) {
+        setError('You have not voted yet');
+        return;
+      }
+
+      await executeTransaction(
+        () => contract.revokeVote()
+      );
     } catch (err) {
-      setError(err.message || 'Error revoking vote');
-      console.error(err);
+      console.error('Revoke vote error:', err);
     }
   };
 
   const handleAssignVotingPower = async () => {
     try {
-      if (!contract || !isAdmin) return;
-      setError('');
-
-      if (!voterAddress || !votingPowerInput) {
-        throw new Error('Voter address and voting power are required');
+      if (!contract || !isAdmin || !votingStatus) {
+        setError('Not authorized or voting is in progress');
+        return;
       }
 
-      const tx = await contract.assignVotingPower(voterAddress, votingPowerInput);
-      await tx.wait();
-      await loadVoterInfo(contract, voterAddress);
+      if (!voterAddress || !votingPowerInput) {
+        setError('Voter address and voting power are required');
+        return;
+      }
+
+      await executeTransaction(
+        () => contract.assignVotingPower(voterAddress, votingPowerInput)
+      );
 
       setVoterAddress('');
       setVotingPowerInput('');
     } catch (err) {
-      setError(err.message || 'Error assigning voting power');
-      console.error(err);
+      console.error('Assign voting power error:', err);
     }
   };
 
   const handleToggleEmergencyStop = async () => {
     try {
-      if (!contract || !isAdmin) return;
-      setError('');
+      if (!contract || !isAdmin) {
+        setError('Not authorized');
+        return;
+      }
 
-      const tx = await contract.toggleEmergencyStop();
-      await tx.wait();
+      await executeTransaction(
+        () => contract.toggleEmergencyStop()
+      );
     } catch (err) {
-      setError(err.message || 'Error toggling emergency stop');
-      console.error(err);
+      console.error('Emergency stop error:', err);
     }
   };
 
   const handleSetBlacklist = async (blacklisted) => {
     try {
-      if (!contract || !isAdmin) return;
-      setError('');
-
-      if (!blacklistAddress) {
-        throw new Error('Voter address is required');
+      if (!contract || !isAdmin || !votingStatus) {
+        setError('Not authorized or voting is in progress');
+        return;
       }
 
-      const tx = await contract.setVoterBlacklist(blacklistAddress, blacklisted);
-      await tx.wait();
-      await loadVoterInfo(contract, blacklistAddress);
+      if (!blacklistAddress) {
+        setError('Voter address is required');
+        return;
+      }
+
+      await executeTransaction(
+        () => contract.setVoterBlacklist(blacklistAddress, blacklisted)
+      );
 
       setBlacklistAddress('');
     } catch (err) {
-      setError(err.message || 'Error updating blacklist');
-      console.error(err);
+      console.error('Blacklist update error:', err);
     }
   };
 
+  const renderVotingResults = () => {
+    if (!votingResults) return null;
+  
+    const data = candidates.map((candidate, index) => ({
+      name: candidate.name,
+      value: candidate.votes,
+    }));
+  
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#9370DB', '#E6E6FA'];
+  
+    return (
+      <div className="mb-6 p-4 border border-gray-700 rounded-lg bg-gray-800">
+        <h3 className="font-semibold text-xl text-gray-300 mb-2 text-center">Voting Results</h3>
+        <p className="text-gray-400 text-lg text-center mb-4">
+          Total Votes Cast: <span className="font-medium text-white">{votingResults.totalVotes}</span>
+        </p>
+        
+        <div className="flex justify-center">
+          <PieChart width={300} height={300}>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={100}  // Ukuran radius lebih kecil
+              fill="#8884d8"
+              label
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Legend />
+            <Tooltip />
+          </PieChart>
+        </div>
+      </div>
+    );
+  };
+  
+  
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Loading...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
+        <div className="flex space-x-2 mb-4">
+          <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce delay-75"></div>
+          <div className="w-4 h-4 bg-green-500 rounded-full animate-bounce delay-150"></div>
+          <div className="w-4 h-4 bg-red-500 rounded-full animate-bounce delay-225"></div>
+        </div>
+
+        <div className="flex space-x-1">
+          {["L", "o", "a", "d", "i", "n", "g", ".", ".", "."].map((char, index) => (
+            <span
+              key={index}
+              className="text-lg text-white font-semibold animate-wave"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              {char}
+            </span>
+          ))}
+        </div>
+        <style>
+          {`
+            .animate-wave {
+              display: inline-block;
+              animation: wave 1.5s ease-in-out infinite;
+            }
+            @keyframes wave {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-5px); }
+            }
+          `}
+        </style>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
-      {/* Error Display dengan status yang lebih detail */}
-      {error && (
-        <div className={`mb-4 p-4 rounded-lg ${error.includes('pending')
-            ? 'bg-blue-50 border border-blue-200'
-            : error.includes('rejected')
-              ? 'bg-yellow-50 border border-yellow-200'
-              : 'bg-red-50 border border-red-200'
-          }`}>
-          <div className="flex items-center">
-            {error.includes('pending') && (
-              <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            )}
-            <span className={`${error.includes('pending')
-                ? 'text-blue-700'
-                : error.includes('rejected')
-                  ? 'text-yellow-700'
-                  : 'text-red-700'
-              }`}>
-              {error}
-            </span>
-          </div>
-        </div>
-
-      )}
-
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="border-b border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-800">Voting dApp</h2>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
+          <div className="p-6 border-b border-gray-700">
+            <h2 className="text-2xl font-bold text-white">Voting Page</h2>
             {emergencyStop && (
-              <div className="mt-2 p-2 bg-red-100 text-red-700 rounded">
+              <div className="mt-2 p-2 bg-red-200 text-red-800 rounded">
                 Emergency Stop Active
               </div>
             )}
           </div>
 
-          <div className="p-6">
-            {/* Error Alert */}
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700">{error}</p>
-              </div>
-            )}
-          </div>
           {/* Account & Voter Info */}
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <p className="font-medium text-gray-700">
-                Connected Account: <span className="text-gray-900">{account}</span>
-              </p>
-              <p className="font-medium text-gray-700">
-                Time Remaining: <span className="text-gray-900">
-                  {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
-                </span>
-              </p>
-            </div>
-            {voterInfo && (
+          <div className="p-6">
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <p className="font-medium text-gray-700">
-                  Voting Power: <span className="text-gray-900">{voterInfo.votingPower}</span>
+                <p className="font-medium text-gray-300">
+                  You Connected With Account : <span className="text-white">{account}</span>
                 </p>
-                <p className="font-medium text-gray-700">
-                  Status: {voterInfo.isBlacklisted ? (
-                    <span className="text-red-600">Blacklisted</span>
-                  ) : voterInfo.hasVoted ? (
-                    <span className="text-green-600">Voted</span>
-                  ) : (
-                    <span className="text-blue-600">Not Voted</span>
+                <p className="font-medium text-gray-300">
+                  Time Remaining Vote : <span className="text-white">{Math.floor(remainingTime / 60)}m {remainingTime % 60}s</span>
+                </p>
+              </div>
+              {voterInfo && (
+                <div className="space-y-2">
+                  <p className="font-medium text-gray-300">
+                    You Voting Power : <span className="text-white">{voterInfo.votingPower}</span>
+                  </p>
+                  <p className="font-medium text-gray-300">
+                    You Status : {voterInfo.isBlacklisted ? (
+                      <span className="text-red-600">Blacklisted</span>
+                    ) : voterInfo.hasVoted ? (
+                      <span className="text-green-500">Voted</span>
+                    ) : (
+                      <span className="text-blue-500">Not Voted</span>
+                    )}
+                  </p>
+                  {voterInfo.hasVoted && (
+                    <button
+                      onClick={handleRevokeVote}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    >
+                      Revoke Vote
+                    </button>
                   )}
-                </p>
-                {voterInfo.hasVoted && (
+                </div>
+              )}
+            </div>
+
+            {/* Admin Controls */}
+            {isAdmin && (
+              <div className="space-y-4 mb-6 p-4 border border-gray-600 rounded-lg bg-gray-800">
+                <h3 className="font-semibold text-gray-300">Admin Controls</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={newCandidate.name}
+                    onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
+                    placeholder="Candidate Name"
+                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    value={newCandidate.description}
+                    onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
+                    placeholder="Candidate Description"
+                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+                  />
                   <button
-                    onClick={handleRevokeVote}
+                    onClick={handleAddCandidate}
+                    disabled={!votingStatus}
+                    className="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  >
+                    Add Candidate
+                  </button>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={votingDuration}
+                    onChange={(e) => setVotingDuration(parseInt(e.target.value))}
+                    placeholder="Duration (minutes)"
+                    min="1"
+                    className="flex-1 px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+                  />
+                  <button
+                    onClick={handleStartVoting}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Start Voting
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    value={voterAddress}
+                    onChange={(e) => setVoterAddress(e.target.value)}
+                    placeholder="Voter Address"
+                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+                  />
+                  <input
+                    type="number"
+                    value={votingPowerInput}
+                    onChange={(e) => setVotingPowerInput(e.target.value)}
+                    placeholder="Voting Power"
+                    min="1"
+                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+                  />
+                  <button
+                    onClick={handleAssignVotingPower}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Assign Power
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    value={blacklistAddress}
+                    onChange={(e) => setBlacklistAddress(e.target.value)}
+                    placeholder="Voter Address"
+                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
+                  />
+                  <button
+                    onClick={() => handleSetBlacklist(true)}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                   >
-                    Revoke Vote
+                    Blacklist
                   </button>
-                )}
-              </div>
-            )}
-          </div>
+                  <button
+                    onClick={() => handleSetBlacklist(false)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Remove from Blacklist
+                  </button>
+                </div>
 
-          {/* Admin Controls */}
-          {isAdmin && (
-            <div className="space-y-4 mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="font-semibold text-gray-800">Admin Controls</h3>
-
-              {/* Add Candidate */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={newCandidate.name}
-                  onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
-                  placeholder="Candidate Name"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <input
-                  type="text"
-                  value={newCandidate.description}
-                  onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
-                  placeholder="Candidate Description"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
                 <button
-                  onClick={handleAddCandidate}
-                  className="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Add Candidate
-                </button>
-              </div>
-
-              {/* Start Voting */}
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={votingDuration}
-                  onChange={(e) => setVotingDuration(parseInt(e.target.value))}
-                  placeholder="Duration (minutes)"
-                  min="1"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <button
-                  onClick={handleStartVoting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Start Voting
-                </button>
-              </div>
-
-              {/* Assign Voting Power */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  value={voterAddress}
-                  onChange={(e) => setVoterAddress(e.target.value)}
-                  placeholder="Voter Address"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <input
-                  type="number"
-                  value={votingPowerInput}
-                  onChange={(e) => setVotingPowerInput(e.target.value)}
-                  placeholder="Voting Power"
-                  min="1"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <button
-                  onClick={handleAssignVotingPower}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Assign Power
-                </button>
-              </div>
-
-              {/* Blacklist Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  value={blacklistAddress}
-                  onChange={(e) => setBlacklistAddress(e.target.value)}
-                  placeholder="Voter Address"
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
-                />
-                <button
-                  onClick={() => handleSetBlacklist(true)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Blacklist
-                </button>
-                <button
-                  onClick={() => handleSetBlacklist(false)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  Remove from Blacklist
-                </button>
-              </div>
-
-              {/* Emergency Stop */}
-              <button
-                onClick={handleToggleEmergencyStop}
-                className={`w-full px-4 py-2 rounded-lg text-white
-                  ${emergencyStop
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                  }`}
-              >
-                {emergencyStop ? 'Resume Voting' : 'Emergency Stop'}
-              </button>
-            </div>
-          )}
-
-          {/* Voting Results */}
-          {votingResults && (
-            <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="font-semibold text-gray-800 mb-2">Voting Results</h3>
-              <p className="text-gray-700">
-                Total Votes Cast: <span className="font-medium">{votingResults.totalVotes}</span>
-              </p>
-            </div>
-          )}
-
-          {/* Candidates Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {candidates.map((candidate) => (
-              <div
-                key={candidate.id}
-                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm"
-              >
-                <h3 className="font-medium text-lg text-gray-800 mb-2">
-                  {candidate.name}
-                </h3>
-                <p className="text-gray-600 mb-2">{candidate.description}</p>
-                <p className="text-gray-600 mb-4">
-                  Votes: <span className="font-medium">{candidate.votes}</span>
-                  {votingResults && (
-                    <span className="ml-2 text-sm">
-                      ({((candidate.votes / votingResults.totalVotes) * 100).toFixed(1)}%)
-                    </span>
-                  )}
-                </p>
-                <button
-                  onClick={() => handleVote(candidate.id)}
-                  disabled={
-                    remainingTime === 0 ||
-                    voterInfo?.hasVoted ||
-                    voterInfo?.isBlacklisted ||
-                    emergencyStop
-                  }
-                  className={`w-full px-4 py-2 rounded-lg text-white font-medium
-                    ${(remainingTime === 0 || voterInfo?.hasVoted || voterInfo?.isBlacklisted || emergencyStop)
-                      ? 'bg-gray-300 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                  onClick={handleToggleEmergencyStop}
+                  className={`w-full px-4 py-2 rounded-lg text-white font-medium ${emergencyStop ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
                     }`}
                 >
-                  {voterInfo?.hasVoted
-                    ? 'Already Voted'
-                    : voterInfo?.isBlacklisted
-                      ? 'Blacklisted'
-                      : emergencyStop
-                        ? 'Voting Stopped'
-                        : 'Vote'}
+                  {emergencyStop ? 'Resume Voting' : 'Emergency Stop'}
                 </button>
               </div>
-            ))}
+            )}
+
+            {votingResults && (
+              <div className="mb-6 p-4 border border-gray-700 rounded-lg bg-gray-800">
+                {renderVotingResults()}
+              </div>
+            )}
+
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {candidates.map((candidate) => (
+                <div key={candidate.id} className="border border-gray-600 rounded-lg p-4 bg-gray-800 shadow-sm">
+                  <h3 className="font-medium text-lg text-white mb-2">{candidate.name}</h3>
+                  <p className="text-gray-400 mb-4">{candidate.description}</p>
+                  <button
+                    onClick={() => handleVote(candidate.id)}
+                    disabled={!votingStatus || voterInfo?.hasVoted || voterInfo?.isBlacklisted}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  >
+                    Vote
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 
 export default PageVoting;
