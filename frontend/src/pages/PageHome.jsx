@@ -2,9 +2,11 @@ import React from 'react'
 
 const PageHome = () => {
   return (
-    <div>
-      <h1>Page Home</h1>
-    </div>
+    <body>
+      <div className='container min-h-screen min-w-full bg-gradient-to-r from-slate-50 to-sky-950'>
+
+      </div>
+    </body>
   )
 }
 
