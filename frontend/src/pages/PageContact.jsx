@@ -1,4 +1,37 @@
 import emailjs from 'emailjs-com';
+import React, { useRef } from 'react';
+import emailjs from '@emailjs/browser';
+import styled from "styled-components";
+import { Result } from 'ethers';
+
+const Contact = () => {
+  
+  const form = useRef();
+
+  const sendEmail = (e) => {
+    e.preventDefault();
+  
+    emailjs.sendForm('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', form.current, 'YOUR_USER_ID')
+        .then((result) => {
+          console.log(result.text);
+        }, (error) => {
+          console.log(error.text);   
+      });
+    };
+
+
+    return (
+      <form ref={form} onSubmit={sendEmail}>
+        <label>Name</label>
+        <input type="text" name="user_name" />
+        <label>Email</label>
+        <input type="email" name="user_email" />
+        <label>Message</label>
+        <textarea name="message" />
+        <input type="submit" value="Send" />
+      </form>
+    );
+  }
 
 const PageContact = () => {
   const handleSubmit = (event) => {
@@ -29,15 +62,15 @@ const PageContact = () => {
           </p>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="mb-4">
-              <label className="block text-white mb-1">Nama</label>
+              <label className="block text-white mb-1">Your Name</label>
               <input type="text" name="name" placeholder="Enter Your Name" className="text-black w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             </div>
             <div className="mb-4">
-              <label className="block text-white mb-1">Email</label>
+              <label className="block text-white mb-1">Your Email</label>
               <input type="email" name="email" placeholder="email@gmail.com" className="text-black w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             </div>
             <div className="mb-4">
-              <label className="block text-white mb-1">Pesan</label>
+              <label className="block text-white mb-1">Message</label>
               <textarea name="message" placeholder="Type Message" className="text-black w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             </div>
             <button
