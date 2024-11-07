@@ -1,50 +1,53 @@
+import emailjs from 'emailjs-com';
+
 const PageContact = () => {
   const handleSubmit = (event) => {
     event.preventDefault();
-    const name = event.target.name.value;
-    const email = event.target.email.value;
-    const message = event.target.message.value;
 
-    if (name && email && message) {
-      alert(`Terima kasih, ${name}! Pesan Anda telah diterima.`);
-      event.target.reset();
-    } else {
-      alert("Harap lengkapi semua kolom.");
-    }
+    // Mengirim data form dengan EmailJS
+    emailjs.sendForm('your_service_id', 'your_template_id', event.target, 'your_user_id')
+      .then(() => {
+        alert(`Terima kasih! Pesan Anda telah dikirim.`);
+        event.target.reset();
+      })
+      .catch((error) => {
+        alert("Maaf, terjadi kesalahan. Silakan coba lagi.");
+        console.error('Error:', error);
+      });
   };
 
   return (
     <section className="py-10 px-4 md:px-8 lg:px-20 bg-gray-900 text-white">
       <h1 className="text-4xl font-bold mb-6">
-        <span className="text-blue-500">Contact</span> <span className="text-white">Us</span>
+        <span className="text-blue-500">Contact</span>
       </h1>
       <div className="flex flex-col md:flex-row md:space-x-10 space-y-10 md:space-y-0">
         <div className="bg-gray-800 p-8 rounded-lg shadow-md mb-10 md:mb-0">
-          <h2 className="text-xl font-semibold mb-4">Hubungi Kami</h2>
+          <h2 className="text-xl font-semibold mb-4">Contact Us</h2>
           <p className="text-white mb-6">
-            Untuk informasi lebih lanjut, anda bisa menghubungi kami:
+          For more information, you can contact us:
           </p>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="mb-4">
               <label className="block text-white mb-1">Nama</label>
-              <input type="text" name="name" placeholder="Masukan Nama Anda" className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+              <input type="text" name="name" placeholder="Enter Your Name" className="text-black w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             </div>
             <div className="mb-4">
               <label className="block text-white mb-1">Email</label>
-              <input type="email" name="email" placeholder="email@gmail.com" className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+              <input type="email" name="email" placeholder="email@gmail.com" className="text-black w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             </div>
             <div className="mb-4">
               <label className="block text-white mb-1">Pesan</label>
-              <textarea name="message" placeholder="Ketik Pesan" className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+              <textarea name="message" placeholder="Type Message" className="text-black w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
             </div>
             <button
               type="submit"
-              className="w-full py-3 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-300">Submit</button>
+              className="w-full py-3 bg-green-500 text-white rounded-md hover:bg-green-700 transition duration-300">Submit</button>
           </form>
         </div>
         
         <div className="bg-gray-800 p-8 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Temui Kami Di</h2>
+          <h2 className="text-xl font-semibold mb-4">Meet Us At</h2>
           <p className="text-white mb-2">
             Jl. Dr. KRT Radjiman Widyodiningrat No.32, RT.07/RW.7, Rawa Badung, Kec. Cakung, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13930
           </p>
