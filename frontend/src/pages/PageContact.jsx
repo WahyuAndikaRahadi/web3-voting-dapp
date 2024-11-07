@@ -14,41 +14,41 @@ const PageContact = () => {
   };
 
   return (
-    <section className="py-10 px-4 md:px-8 lg:px-20">
+    <section className="py-10 px-4 md:px-8 lg:px-20  bg-gray-900 text-white">
       <h1 className="text-4xl font-bold mb-6">
-        Contact <span className="text-orange-500">Us</span>
+        <span className="text-blue-500">Contact</span>  <span className="text-white">Us</span>
       </h1>
       <div className="flex flex-col md:flex-row md:space-x-10 space-y-10 md:space-y-0">
-        <div className="flex-1 bg-gray-100 p-8 rounded-lg shadow-md">
+        <div className="bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
           <h2 className="text-xl font-semibold mb-4">Hubungi Kami</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-white mb-6">
             Untuk informasi lebih lanjut, anda bisa menghubungi kami:
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-gray-700">Nama</label>
+              <label className="block text-white">Nama</label>
               <input type="text" name="name" placeholder="Masukan Nama Anda" className="w-full p-3 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"/>
             </div>
             <div>
-              <label className="block text-gray-700">Email</label>
+              <label className="block text-white">Email</label>
               <input type="email" name="email" placeholder="email@gmail.com" className="w-full p-3 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"/>
             </div>
             <div>
-              <label className="block text-gray-700">Pesan</label>
+              <label className="block text-white">Pesan</label>
               <textarea name="message" placeholder="Ketik Pesan" className="w-full p-3 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"/>
             </div>
             <button
               type="submit"
-              className="w-full py-3 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition duration-300">Submit</button>
+              className="w-full py-3 bg-green-500 text-white rounded-md hover:bg-orange-600 transition duration-300">Submit</button>
           </form>
         </div>
         
-        <div className="flex-1 bg-gray-100 p-8 rounded-lg shadow-md">
+        <div className="flex-1 bg-gray-800 p-8 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Temui Kami Di</h2>
-          <p className="text-gray-600 mb-2">
+          <p className="text-white mb-2">
             Jl. Dr. KRT Radjiman Widyodiningrat No.32, RT.07/RW.7, Rawa Badung, Kec. Cakung, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13930
           </p>
-          <p className="text-gray-600 mb-6">No. Telepon: 0813-8877-2645</p>
+          <p className="text-white mb-6">No. Telepon: 0813-8877-2645</p>
           <div className="map mb-4">
           <iframe 
            title="Map Location"
