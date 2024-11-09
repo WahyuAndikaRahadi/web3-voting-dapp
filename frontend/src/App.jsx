@@ -4,6 +4,7 @@ import PageHome from './pages/PageHome';
 import PageAbout from './pages/PageAbout';
 import PageVoting from './pages/PageVoting';
 import PageContact from './pages/PageContact';
+import favicon from './assets/images/favicon.png';
 
 const App = () => {
     return (
@@ -11,7 +12,7 @@ const App = () => {
             <header className='bg-gray-800'>
                 <div className="mx-auto max-w-screen-lg py-1 flex items-center justify-between">
                     <a className='flex items-center text-2xl text-white font-bold' href="">
-                        <span></span>
+                        <span><img src={favicon} alt="" /></span>
                         <span>TiedVote</span>
                         </a>
                     <nav className=" shadow-lg p-4">
