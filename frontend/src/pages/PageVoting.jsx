@@ -570,7 +570,7 @@ const PageVoting = () => {
               <div className="space-y-4">
                 <div className="bg-gray-900/50 rounded-xl p-4">
                   <p className="text-gray-400 text-sm mb-1">Connected Account</p>
-                  <p className="text-white font-mono">{account}</p>
+                  <p className="text-white font-mono overflow-hidden">{account}</p>
                 </div>
 
                 <div className="bg-gray-900/50 rounded-xl p-4">

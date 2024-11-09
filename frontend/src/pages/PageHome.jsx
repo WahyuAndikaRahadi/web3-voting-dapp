@@ -1,9 +1,8 @@
-import React from 'react'
+import React from 'react';
 const PageHome = () => {
   return (
     <>
         <div className="min-h-screen bg-gradient-to-br from-black to-gray-900 text-white">
-      {/* Hero Section */}
       <div className="pt-32 pb-20 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">
@@ -13,13 +12,12 @@ const PageHome = () => {
             Secure, transparent, and immutable voting system powered by blockchain technology.
             Take control of your voice in the digital age.
           </p>
-          <button className="bg-gradient-to-r from-teal-500 to-blue-500 px-8 py-4 rounded-lg font-medium text-lg hover:shadow-lg hover:shadow-teal-500/20 transition-all">
+          <a  href='/voting' className="bg-gradient-to-r from-teal-500 to-blue-500 px-8 py-4 rounded-lg font-medium text-lg hover:shadow-lg hover:shadow-teal-500/20 transition-all">
             Start Voting →
-          </button>
+          </a>
         </div>
       </div>
 
-      {/* Features Section */}
       <div className="py-20 bg-black/30">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose TiedVote?</h2>
@@ -43,7 +41,6 @@ const PageHome = () => {
         </div>
       </div>
 
-      {/* Stats Section */}
       <div className="py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
