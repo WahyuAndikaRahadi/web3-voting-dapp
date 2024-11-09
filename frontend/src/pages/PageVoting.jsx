@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { Vote, Users, Power, Shield, Clock, ChevronRight, Award, AlertTriangle, UserX, UserCheck, PlusCircle, Play, StopCircle } from 'lucide-react';
 import { contractABI, contractAddress } from '../constant';
 
 const PageVoting = () => {
@@ -538,169 +539,265 @@ const PageVoting = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
-          <div className="p-6 border-b border-gray-700">
-            <h2 className="text-2xl font-bold text-white">Voting Page</h2>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Vote className="w-10 h-10 text-blue-500" />
+              <h1 className="text-3xl font-bold text-white">Voting Portal</h1>
+            </div>
             {emergencyStop && (
-              <div className="mt-2 p-2 bg-red-200 text-red-800 rounded">
-                Emergency Stop Active
+              <div className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500 rounded-full">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                <span className="text-red-500 font-medium">Emergency Stop Active</span>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Account & Voter Info */}
-          <div className="p-6">
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <p className="font-medium text-gray-300">
-                  You Connected With Account : <span className="text-white">{account}</span>
-                </p>
-                <p className="font-medium text-gray-300">
-                  Time Remaining Vote : <span className="text-white">{Math.floor(remainingTime / 60)}m {remainingTime % 60}s</span>
-                </p>
-              </div>
-              {voterInfo && (
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-300">
-                    You Voting Power : <span className="text-white">{voterInfo.votingPower}</span>
-                  </p>
-                  <p className="font-medium text-gray-300">
-                    You Status : {voterInfo.isBlacklisted ? (
-                      <span className="text-red-600">Blacklisted</span>
-                    ) : voterInfo.hasVoted ? (
-                      <span className="text-green-500">Voted</span>
-                    ) : (
-                      <span className="text-blue-500">Not Voted</span>
-                    )}
-                  </p>
-                  {voterInfo.hasVoted && (
-                    <button
-                      onClick={handleRevokeVote}
-                      disabled={cannotRevokeVote}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
-
-                    >
-                      Revoke Vote
-                    </button>
-                  )}
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - User Info */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                Voter Information
+              </h2>
+              
+              <div className="space-y-4">
+                <div className="bg-gray-900/50 rounded-xl p-4">
+                  <p className="text-gray-400 text-sm mb-1">Connected Account</p>
+                  <p className="text-white font-mono">{account}</p>
                 </div>
-              )}
-            </div>
 
+                <div className="bg-gray-900/50 rounded-xl p-4">
+                  <p className="text-gray-400 text-sm mb-1 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Time Remaining
+                  </p>
+                  <p className="text-white text-2xl font-bold">
+                    {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
+                  </p>
+                </div>
+
+                {voterInfo && (
+                  <>
+                    <div className="bg-gray-900/50 rounded-xl p-4">
+                      <p className="text-gray-400 text-sm mb-1 flex items-center gap-2">
+                        <Power className="w-4 h-4" />
+                        Voting Power
+                      </p>
+                      <p className="text-white text-2xl font-bold">{voterInfo.votingPower}</p>
+                    </div>
+
+                    <div className="bg-gray-900/50 rounded-xl p-4">
+                      <p className="text-gray-400 text-sm mb-1 flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Status
+                      </p>
+                      <div className="mt-2">
+                        {voterInfo.isBlacklisted ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/20 text-red-500 rounded-full text-sm font-medium">
+                            <UserX className="w-4 h-4" /> Blacklisted
+                          </span>
+                        ) : voterInfo.hasVoted ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-500 rounded-full text-sm font-medium">
+                            <UserCheck className="w-4 h-4" /> Voted
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/20 text-blue-500 rounded-full text-sm font-medium">
+                            <ChevronRight className="w-4 h-4" /> Not Voted
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {voterInfo.hasVoted && (
+                      <button
+                        onClick={handleRevokeVote}
+                        disabled={cannotRevokeVote}
+                        className="w-full px-4 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        <StopCircle className="w-5 h-5" />
+                        Revoke Vote
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Middle & Right Columns - Admin Controls & Voting */}
+          <div className="lg:col-span-2 space-y-6">
             {/* Admin Controls */}
             {isAdmin && (
-              <div className="space-y-4 mb-6 p-4 border border-gray-600 rounded-lg bg-gray-800">
-                <h3 className="font-semibold text-gray-300">Admin Controls</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    value={newCandidate.name}
-                    onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
-                    placeholder="Candidate Name"
-                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
-                  />
-                  <input
-                    type="text"
-                    value={newCandidate.description}
-                    onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
-                    placeholder="Candidate Description"
-                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
-                  />
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+                <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-blue-500" />
+                  Admin Controls
+                </h2>
+
+                <div className="space-y-6">
+                  {/* Add Candidate */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-400">Add New Candidate</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={newCandidate.name}
+                        onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
+                        placeholder="Candidate Name"
+                        className="px-4 py-3 bg-gray-900/50 text-white border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="text"
+                        value={newCandidate.description}
+                        onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
+                        placeholder="Candidate Description"
+                        className="px-4 py-3 bg-gray-900/50 text-white border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <button
+                      onClick={handleAddCandidate}
+                      disabled={cannotAddCandidate}
+                      className="w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <PlusCircle className="w-5 h-5" />
+                      Add Candidate
+                    </button>
+                  </div>
+
+                  {/* Voting Controls */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-400">Voting Controls</h3>
+                    <div className="flex gap-3">
+                      <input
+                        type="number"
+                        value={votingDuration}
+                        onChange={(e) => setVotingDuration(parseInt(e.target.value))}
+                        placeholder="Duration (minutes)"
+                        min="1"
+                        className="flex-1 px-4 py-3 bg-gray-900/50 text-white border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={handleStartVoting}
+                        disabled={cannotStartVoting}
+                        className="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        <Play className="w-5 h-5" />
+                        Start
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Voter Management */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-400">Voter Management</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={voterAddress}
+                        onChange={(e) => setVoterAddress(e.target.value)}
+                        placeholder="Voter Address"
+                        className="px-4 py-3 bg-gray-900/50 text-white border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="number"
+                        value={votingPowerInput}
+                        onChange={(e) => setVotingPowerInput(e.target.value)}
+                        placeholder="Voting Power"
+                        min="1"
+                        className="px-4 py-3 bg-gray-900/50 text-white border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <button
+                      onClick={handleAssignVotingPower}
+                      disabled={cannotAssignPower}
+                      className="w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <Power className="w-5 h-5" />
+                      Assign Power
+                    </button>
+                  </div>
+
+                  {/* Blacklist Controls */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-400">Blacklist Management</h3>
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={blacklistAddress}
+                        onChange={(e) => setBlacklistAddress(e.target.value)}
+                        placeholder="Voter Address"
+                        className="flex-1 px-4 py-3 bg-gray-900/50 text-white border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={() => handleSetBlacklist(true)}
+                        disabled={cannotManageBlacklist}
+                        className="px-4 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors disabled:cursor-not-allowed"
+                      >
+                        Blacklist
+                      </button>
+                      <button
+                        onClick={() => handleSetBlacklist(false)}
+                        className="px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium transition-colors"
+                      >
+                        Unblock
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Emergency Stop */}
                   <button
-                    onClick={handleAddCandidate}
-                    disabled={cannotAddCandidate}
-                    className="px-4 py-2 d-block bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                    onClick={handleToggleEmergencyStop}
+                    className={`w-full px-4 py-3 rounded-xl text-white font-medium transition-colors flex items-center justify-center gap-2
+                      ${emergencyStop 
+                        ? 'bg-green-500 hover:bg-green-600' 
+                        : 'bg-red-500 hover:bg-red-600'
+                      }`}
                   >
-                    Add Candidate
+                    {emergencyStop ? (
+                      <>
+                        <Play className="w-5 h-5" />
+                        Resume Voting
+                      </>
+                    ) : (
+                      <>
+                        <StopCircle className="w-5 h-5" />
+                        Emergency Stop
+                      </>
+                    )}
                   </button>
                 </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    value={votingDuration}
-                    onChange={(e) => setVotingDuration(parseInt(e.target.value))}
-                    placeholder="Duration (minutes)"
-                    min="1"
-                    className="flex-1 px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
-                  />
-                  <button
-                    onClick={handleStartVoting}
-                    disabled={cannotStartVoting}
-                    className="px-4 py-2  bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
-
-                  >
-                    Start Voting
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <input
-                    type="text"
-                    value={voterAddress}
-                    onChange={(e) => setVoterAddress(e.target.value)}
-                    placeholder="Voter Address"
-                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
-                  />
-                  <input
-                    type="number"
-                    value={votingPowerInput}
-                    onChange={(e) => setVotingPowerInput(e.target.value)}
-                    placeholder="Voting Power"
-                    min="1"
-                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
-                  />
-                  <button
-                    onClick={handleAssignVotingPower}
-                    disabled={cannotAssignPower}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
-                  >
-                    Assign Power
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <input
-                    type="text"
-                    value={blacklistAddress}
-                    onChange={(e) => setBlacklistAddress(e.target.value)}
-                    placeholder="Voter Address"
-                    className="px-4 py-2 bg-gray-700 text-white border border-gray-500 rounded-lg"
-                  />
-                  <button
-                    onClick={() => handleSetBlacklist(true)}
-                    disabled={cannotManageBlacklist}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
-                  >
-                    Blacklist
-                  </button>
-                  <button
-                    onClick={() => handleSetBlacklist(false)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    Remove from Blacklist
-                  </button>
-                </div>
-
-                <button
-                  onClick={handleToggleEmergencyStop}
-                  className={`w-full px-4 py-2 rounded-lg text-white font-medium ${emergencyStop ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-                    }`}
-                >
-                  {emergencyStop ? 'Resume Voting' : 'Emergency Stop'}
-                </button>
               </div>
             )}
 
+            {/* Voting Results */}
             {votingResults && (
-              <div className="mb-6 p-4 border border-gray-700 rounded-lg bg-gray-800">
-                {renderVotingResults()}
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+                <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-blue-500" />
+                  Voting Results
+                </h2>
+                <div className="space-y-4">
+                  {renderVotingResults()}
+                </div>
               </div>
             )}
-            <div className="mb-6">
-              {renderCandidates()}
+
+            {/* Candidates List */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                Candidates
+              </h2>
+              <div className="space-y-4">
+                {renderCandidates()}
+              </div>
             </div>
           </div>
         </div>
