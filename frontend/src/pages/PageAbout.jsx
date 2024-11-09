@@ -4,31 +4,28 @@ import { Lock, Shield, Check, Clock, Database, FileText } from 'lucide-react';
 const PageAbout = () => {
   return (
     <div className="min-h-screen bg-black text-gray-200">
-      {/* Hero Section */}
       <div className="bg-gradient-to-r from-gray-900 to-black">
-        <div className="container mx-auto px-6 py-20">
+        <div className="container mx-auto px-6 py-20 text-center">
           <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 mb-4">
             TiedVote
           </h1>
-          <p className="text-xl text-gray-400 max-w-2xl">
+          <p className="text-xl text-gray-400 mx-auto max-w-2xl">
             The next-generation voting platform powered by blockchain technology. Our mission is to provide a secure, transparent, and efficient way for communities to make collective decisions.
           </p>
         </div>
       </div>
 
-      {/* What We Do Section */}
       <div className="container mx-auto px-6 py-16">
         <h2 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
           What We Do
         </h2>
-        <div className="bg-gray-900 rounded-lg p-8 backdrop-blur-lg bg-opacity-50 border border-gray-800">
-          <p className="text-lg text-gray-300">
+        <div className="bg-gray-900 rounded-lg p-8 backdrop-blur-lg bg-opacity-50 border border-gray-800 max-w-2xl">
+          <p className="text-lg text-gray-300 ">
             At TiedVote, we empower administrators to create polls and assign voting power to users. Whether it's for community decisions, organizational votes, or any other type of poll, our platform ensures that every vote counts and is accurately recorded.
           </p>
         </div>
       </div>
 
-      {/* Benefits Grid */}
       <div className="container mx-auto px-6 py-16">
         <h2 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
           Benefits of Using Our Platform
@@ -51,7 +48,6 @@ const PageAbout = () => {
         </div>
       </div>
 
-      {/* Blockchain Section */}
       <div className="container mx-auto px-6 py-16">
         <h2 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
           Blockchain Integration
