@@ -22,7 +22,6 @@ contract Voting {
     uint256 public votingEnd;
     bool public votingStarted;
     uint256 public minimumVotingPower;
-    bool public canVotersAddCandidates;
     uint256 public totalVotes;
     bool public emergencyStop;
     
@@ -40,7 +39,6 @@ contract Voting {
     error AlreadyVoted(address voter);
     error InvalidCandidateId(uint256 candidateId);
     error VotingAlreadyStarted();
-    error CandidateAdditionClosed();
     error InsufficientVotingPower(address voter, uint256 power, uint256 required);
     error EmergencyStopActive();
     error VoterIsBlacklisted(address voter);
@@ -66,18 +64,16 @@ contract Voting {
         _;
     }
     
-    constructor(uint256 _minimumVotingPower, bool _canVotersAddCandidates) {
+    constructor(uint256 _minimumVotingPower) {
         if (_minimumVotingPower == 0) revert InvalidVotingDuration();
         admin = msg.sender;
         votingStarted = false;
         minimumVotingPower = _minimumVotingPower;
-        canVotersAddCandidates = _canVotersAddCandidates;
         emergencyStop = false;
     }
     
-    function addCandidate(string memory _name, string memory _description) public {
-        if (votingStarted) revert CandidateAdditionClosed();
-        if (!canVotersAddCandidates && msg.sender != admin) revert OnlyAdmin(msg.sender);
+    function addCandidate(string memory _name, string memory _description) public onlyAdmin {
+        if (votingStarted) revert VotingAlreadyStarted();
         
         uint256 candidateId = candidates.length;
         candidates.push(Candidate(candidateId, _name, _description, 0));
@@ -95,14 +91,10 @@ contract Voting {
     }
     
     function vote(uint256 _candidateId) public votingOngoing notBlacklisted {
-        if (!votingStarted) revert VotingNotStarted();
-        
-        if (block.timestamp >= votingEnd) revert VotingEnded();
-        
         if (voters[msg.sender].hasVoted) revert AlreadyVoted(msg.sender);
-        
+
         if (_candidateId >= candidates.length) revert InvalidCandidateId(_candidateId);
-        
+
         if (voters[msg.sender].votingPower < minimumVotingPower) {
             revert InsufficientVotingPower(
                 msg.sender, 
@@ -110,16 +102,15 @@ contract Voting {
                 minimumVotingPower
             );
         }
-        
+
         voters[msg.sender].hasVoted = true;
         voters[msg.sender].votedCandidateId = _candidateId;
         candidates[_candidateId].voteCount += voters[msg.sender].votingPower;
         totalVotes += voters[msg.sender].votingPower;
-        
+
         emit VoteCasted(msg.sender, _candidateId, voters[msg.sender].votingPower);
     }
 
-    
     function assignVotingPower(address _voter, uint256 _power) public onlyAdmin {
         if (_power < minimumVotingPower) {
             revert InsufficientVotingPower(_voter, _power, minimumVotingPower);

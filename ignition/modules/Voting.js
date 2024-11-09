@@ -7,9 +7,8 @@ async function main() {
 
     const Voting = await hre.ethers.getContractFactory("Voting");
     const minimumVotingPower = 1;
-    const canVotersAddCandidates = false;
 
-    const voting = await Voting.deploy(minimumVotingPower, canVotersAddCandidates);
+    const voting = await Voting.deploy(minimumVotingPower,);
     await voting.waitForDeployment();
 
     const address = await voting.getAddress();
@@ -23,8 +22,16 @@ async function main() {
 
       await hre.run("verify:verify", {
         address: address,
-        constructorArguments: [minimumVotingPower, canVotersAddCandidates],
+        constructorArguments: [minimumVotingPower],
       });
+    }
+        // Optional: Add some initial candidates for testing
+    // Only do this for local testing networks
+    if (network === "hardhat" || network === "localhost") {
+      await voting.addCandidate("Candidate 1", "Description of Candidate 1");
+      await voting.addCandidate("Candidate 2", "Description of Candidate 2");
+      await voting.addCandidate("Candidate 3", "Description of Candidate 3");
+      console.log("Added initial test candidates");
     }
 
   
