@@ -10,7 +10,10 @@ const App = () => {
         <Router>
             <header className='bg-gray-800'>
                 <div className="mx-auto max-w-screen-lg py-1 flex items-center justify-between">
-                    <a className='flex items-center text-2xl text-white font-bold' href=""><span>TiedVote</span></a>
+                    <a className='flex items-center text-2xl text-white font-bold' href="">
+                        <span></span>
+                        <span>TiedVote</span>
+                        </a>
                     <nav className=" shadow-lg p-4">
                         <ul className="flex md:gap-x-8">
                             <li><Link to="/" className="text-gray-100 hover:text-gray-300">Home</Link></li>
