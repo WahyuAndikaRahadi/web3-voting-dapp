@@ -610,7 +610,7 @@ const PageVoting = () => {
                   />
                   <button
                     onClick={handleAddCandidate}
-          
+                    disabled={cannotAddCandidate}
                     className="px-4 py-2 d-block bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
                   >
                     Add Candidate
