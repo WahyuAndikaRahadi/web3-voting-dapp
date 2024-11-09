@@ -43,16 +43,13 @@ const PageVoting = () => {
         setContract(votingContract);
         setAccount(currentAccount);
 
-        // Check admin status for the current account
         const admin = await votingContract.admin();
         const isCurrentAdmin = currentAccount.toLowerCase() === admin.toLowerCase();
         setIsAdmin(isCurrentAdmin);
 
-        // Load emergency stop status
         const stopStatus = await votingContract.emergencyStop();
         setEmergencyStop(stopStatus);
 
-        // Load candidate and voting data
         await Promise.all([
           loadCandidates(votingContract),
           loadVoterInfo(votingContract, currentAccount),
@@ -128,7 +125,6 @@ const PageVoting = () => {
       const time = await votingContract.getRemainingTime();
       setRemainingTime(Number(time));
 
-      // Update voting status based on time and emergency stop
       const isActive = Number(time) > 0 && !emergencyStop;
       setVotingStatus(isActive);
 
@@ -146,10 +142,8 @@ const PageVoting = () => {
 
   const resetVotingState = async (votingContract) => {
     try {
-      // Reset the voting state
       await votingContract.resetVotingState();
 
-      // Reload data after reset
       await Promise.all([
         loadVoterInfo(votingContract, account),
         loadCandidates(votingContract),
@@ -306,7 +300,6 @@ const PageVoting = () => {
 
   const handleAddCandidate = async () => {
     try {
-      // Debug logs
       console.log('Current Contract State:', {
         isAdmin,
         votingStarted: votingStatus,
@@ -314,7 +307,6 @@ const PageVoting = () => {
         contract: !!contract
       });
   
-      // Validasi dasar
       if (!contract) {
         setError('Contract connection not established');
         return;
@@ -325,7 +317,6 @@ const PageVoting = () => {
         return;
       }
   
-      // Periksa status voting secara eksplisit dari smart contract
       const remainingTimeValue = await contract.getRemainingTime();
       const votingStartedStatus = remainingTimeValue > 0;
       console.log('Voting Status Check:', {
@@ -338,7 +329,6 @@ const PageVoting = () => {
         return;
       }
   
-      // Validasi input
       if (!newCandidate.name.trim() || !newCandidate.description.trim()) {
         setError('Candidate name and description are required');
         return;
@@ -347,23 +337,20 @@ const PageVoting = () => {
       setLoading(true);
       setError('');
   
-      // Kirim transaksi dengan parameter yang lengkap
       const tx = await contract.addCandidate(
         newCandidate.name.trim(),
         newCandidate.description.trim(),
         {
           gasLimit: 300000,
-          from: account // explicit sender
+          from: account
         }
       );
   
       console.log('Transaction sent:', tx.hash);
       
-      // Tunggu konfirmasi
       const receipt = await tx.wait();
       console.log('Transaction confirmed:', receipt);
   
-      // Cek event dari receipt
       const addEvent = receipt.events?.find(
         (e) => e.event === 'CandidateAdded'
       );
@@ -372,14 +359,12 @@ const PageVoting = () => {
         setError('Candidate added successfully!');
       }
   
-      // Reset form dan reload data
       setNewCandidate({ name: '', description: '' });
       await loadCandidates(contract);
   
     } catch (err) {
       console.error('Add candidate error:', err);
       
-      // Error handling yang lebih spesifik
       if (err.message.includes('VotingAlreadyStarted')) {
         setError('Cannot add candidate: Voting has already started');
       } else if (err.message.includes('OnlyAdmin')) {
@@ -392,7 +377,6 @@ const PageVoting = () => {
     }
   };
   
-  // Tambahkan ini di useEffect untuk memonitor status kontrak
   useEffect(() => {
     const checkContractStatus = async () => {
       if (!contract) return;
@@ -455,13 +439,12 @@ const PageVoting = () => {
   const renderVotingResults = () => {
     if (!votingResults) return null;
   
-    // Membentuk data untuk chart
+    
     const data = candidates.map((candidate, index) => ({
       name: candidate.name,
       value: candidate.votes,
     }));
   
-    // Warna untuk setiap segmen di pie chart
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#9370DB', '#FF6347'];
   
     return (
@@ -541,7 +524,6 @@ const PageVoting = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <div className="max-w-7xl mx-auto p-6">
-        {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -557,9 +539,7 @@ const PageVoting = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - User Info */}
           <div className="lg:col-span-1">
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
@@ -631,9 +611,7 @@ const PageVoting = () => {
             </div>
           </div>
 
-          {/* Middle & Right Columns - Admin Controls & Voting */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Admin Controls */}
             {isAdmin && (
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
                 <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
@@ -642,7 +620,6 @@ const PageVoting = () => {
                 </h2>
 
                 <div className="space-y-6">
-                  {/* Add Candidate */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-gray-400">Add New Candidate</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -671,7 +648,6 @@ const PageVoting = () => {
                     </button>
                   </div>
 
-                  {/* Voting Controls */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-gray-400">Voting Controls</h3>
                     <div className="flex gap-3">
@@ -694,7 +670,6 @@ const PageVoting = () => {
                     </div>
                   </div>
 
-                  {/* Voter Management */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-gray-400">Voter Management</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -724,7 +699,6 @@ const PageVoting = () => {
                     </button>
                   </div>
 
-                  {/* Blacklist Controls */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-gray-400">Blacklist Management</h3>
                     <div className="flex gap-3">
@@ -751,7 +725,6 @@ const PageVoting = () => {
                     </div>
                   </div>
 
-                  {/* Emergency Stop */}
                   <button
                     onClick={handleToggleEmergencyStop}
                     className={`w-full px-4 py-3 rounded-xl text-white font-medium transition-colors flex items-center justify-center gap-2
@@ -776,7 +749,6 @@ const PageVoting = () => {
               </div>
             )}
 
-            {/* Voting Results */}
             {votingResults && (
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
                 <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
@@ -789,7 +761,6 @@ const PageVoting = () => {
               </div>
             )}
 
-            {/* Candidates List */}
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-500" />
