@@ -11,9 +11,8 @@ const App = () => {
         <Router>
             <header className='bg-gray-800'>
                 <div className="mx-auto max-w-screen-lg py-1 flex items-center justify-between">
-                    <a className='flex items-center text-2xl text-white font-bold' href="">
-                        <span><img src={favicon} alt="" /></span>
-                        <span>TiedVote</span>
+                    <a className='flex items-center text-2xl text-white font-bold' href="/">
+                        <span><img src={favicon} className='w-20 ' alt="" /></span>
                         </a>
                     <nav className=" shadow-lg p-4">
                         <ul className="flex md:gap-x-8">
